@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ᚱᛟᚳᛟ · 洛克语翻译器</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">ROCO LANGUAGE</p>
+          <h1>洛克语翻译器</h1>
+        </div>
+        <div class="header-actions">
+          <button class="help-button" id="helpButton" type="button" aria-haspopup="dialog">帮助</button>
+          <div class="rune-mark" aria-hidden="true">ROCO</div>
+        </div>
+      </header>
+
+      <section class="translator" aria-label="Roco translator">
+        <div class="mode-switch" role="tablist" aria-label="转换方向">
+          <button class="mode-button active" type="button" data-mode="encode" role="tab" aria-selected="true">
+            英文 → 洛克语
+          </button>
+          <button class="mode-button" type="button" data-mode="decode" role="tab" aria-selected="false">
+            洛克语 → 英文
+          </button>
+        </div>
+
+        <div class="workbench">
+          <section class="panel">
+            <div class="panel-heading">
+              <label id="sourceLabel" for="sourceText">英文</label>
+              <button class="copy-button" id="clearButton" type="button">清空</button>
+            </div>
+            <textarea
+              id="sourceText"
+              spellcheck="false"
+              autocomplete="off"
+              autocapitalize="off"
+            >roco kingdom</textarea>
+          </section>
+
+          <section class="panel output-panel">
+            <div class="panel-heading">
+              <label id="primaryLabel" for="primaryOutput">洛克语字体</label>
+            </div>
+            <div class="decode-preference" id="decodePreference" hidden>
+              <div class="decode-group">
+                <span class="decode-label">ᚲ 对应</span>
+                <div class="decode-switch" role="radiogroup" aria-label="C 和 K 的偏好">
+                  <button
+                    class="decode-option active"
+                    type="button"
+                    data-group="ck"
+                    data-value="c"
+                    role="radio"
+                    aria-checked="true"
+                  >
+                    C
+                  </button>
+                  <button class="decode-option" type="button" data-group="ck" data-value="k" role="radio" aria-checked="false">
+                    K
+                  </button>
+                </div>
+              </div>
+              <div class="decode-group">
+                <span class="decode-label">ᚹ 对应</span>
+                <div class="decode-switch" role="radiogroup" aria-label="V 和 W 的偏好">
+                  <button
+                    class="decode-option active"
+                    type="button"
+                    data-group="vw"
+                    data-value="v"
+                    role="radio"
+                    aria-checked="true"
+                  >
+                    V
+                  </button>
+                  <button class="decode-option" type="button" data-group="vw" data-value="w" role="radio" aria-checked="false">
+                    W
+                  </button>
+                </div>
+              </div>
+            </div>
+            <textarea id="primaryOutput" class="rune-font" readonly spellcheck="false"></textarea>
+          </section>
+        </div>
+
+        <div class="secondary-grid">
+          <section class="panel compact-panel">
+            <div class="panel-heading">
+              <label id="secondaryLabel" for="secondaryOutput">Unicode 洛克语</label>
+              <button class="copy-button" id="copySecondary" type="button">复制</button>
+            </div>
+            <textarea id="secondaryOutput" readonly spellcheck="false"></textarea>
+          </section>
+
+          <section class="panel compact-panel">
+            <div class="panel-heading">
+              <span>字符表</span>
+            </div>
+            <div id="alphabetGrid" class="alphabet-grid" aria-label="Roco alphabet"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <div class="modal-backdrop" id="helpModal" hidden>
+      <section
+        class="help-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="helpTitle"
+        tabindex="-1"
+      >
+        <div class="modal-heading">
+          <h2 id="helpTitle">使用说明</h2>
+          <button class="copy-button" id="closeHelp" type="button">关闭</button>
+        </div>
+        <div class="help-content">
+          <p>输入英文时，右侧会用仓库里的洛克语字体显示同一段文本；下方会给出可复制的 Unicode 洛克语版本。</p>
+          <p>切换到“洛克语 → 英文”后，可以粘贴 Unicode 洛克语文字，页面会尽量转回英文。</p>
+          <p>洛克语文字只有 24 个，英文字母有 26 个，因此有两组字母共用同一个文字：C 和 K 相同，V 和 W 相同。</p>
+          <p>反向转换时无法判断原文是哪一个重复字母，可以分别设置 ᚲ 偏向 C 还是 K，以及 ᚹ 偏向 V 还是 W。</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="script.js"></script>
+  </body>
+</html>
