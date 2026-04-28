@@ -124,6 +124,18 @@ let toastTimer = 0;
 let isAlphabetOpen = false;
 let deferredInstallPrompt = null;
 
+function isSymbolOnlyInput() {
+  return mode === "decode" && mobileQuery.matches;
+}
+
+function syncSourceInputAffordance() {
+  const symbolOnly = isSymbolOnlyInput();
+  sourceText.readOnly = symbolOnly;
+  sourceText.inputMode = symbolOnly ? "none" : "text";
+  sourceText.setAttribute("aria-readonly", String(symbolOnly));
+  sourceText.classList.toggle("symbol-only-input", symbolOnly);
+}
+
 function encodeToUnicode(text) {
   return [...text]
     .map((char) => {
@@ -193,6 +205,7 @@ function setMode(nextMode) {
   }
 
   setAlphabetOpen(mode === "decode" && mobileQuery.matches);
+  syncSourceInputAffordance();
   updateOutput();
 }
 
@@ -391,7 +404,9 @@ clearButton.addEventListener("click", () => {
   } else {
     decodeText = "";
   }
-  sourceText.focus();
+  if (!isSymbolOnlyInput()) {
+    sourceText.focus();
+  }
   updateOutput();
 });
 
@@ -424,6 +439,7 @@ alphabetToggle.addEventListener("click", () => setAlphabetOpen(!isAlphabetOpen))
 
 mobileQuery.addEventListener("change", () => {
   setAlphabetOpen(mobileQuery.matches && mode === "decode");
+  syncSourceInputAffordance();
 });
 
 decodeOptions.forEach((button) => {
@@ -498,13 +514,23 @@ alphabetGrid.addEventListener("click", (event) => {
   const textToInsert = mode === "encode" ? cell.dataset.letter : runeMap[cell.dataset.letter];
   const start = sourceText.selectionStart;
   const end = sourceText.selectionEnd;
-  sourceText.setRangeText(textToInsert, start, end, "end");
-  sourceText.focus();
+  const nextSelection = start + textToInsert.length;
+  sourceText.value = `${sourceText.value.slice(0, start)}${textToInsert}${sourceText.value.slice(end)}`;
+  sourceText.setSelectionRange(nextSelection, nextSelection);
+  if (!isSymbolOnlyInput()) {
+    sourceText.focus();
+  }
+  if (mode === "encode") {
+    encodeText = sourceText.value;
+  } else {
+    decodeText = sourceText.value;
+  }
   updateOutput();
 });
 
 renderAlphabet();
 setAlphabetOpen(false);
+syncSourceInputAffordance();
 updateOutput();
 
 if (isStandaloneApp()) {
