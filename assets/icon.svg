@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">洛克语翻译器</title>
+  <desc id="desc">A dark square icon with golden Roco runes.</desc>
+  <rect width="512" height="512" rx="96" fill="#111312"/>
+  <path fill="#202720" d="M80 88h352v336H80z"/>
+  <path fill="none" stroke="#344033" stroke-width="18" d="M113 121h286v270H113z"/>
+  <circle cx="256" cy="256" r="126" fill="#191d1a" stroke="#8ed0c1" stroke-width="10"/>
+  <text x="256" y="282" text-anchor="middle" fill="#e4b85d" font-family="Georgia, serif" font-size="118" font-weight="700">ᚱᛟ</text>
+  <text x="256" y="348" text-anchor="middle" fill="#f3f0e7" font-family="Arial, sans-serif" font-size="44" font-weight="800" letter-spacing="8">ROCO</text>
+</svg>

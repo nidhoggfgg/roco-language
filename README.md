@@ -9,18 +9,36 @@
 - Unicode 洛克语转英文
 - 支持 `C/K`、`V/W` 两组共用字符的反向转换偏好
 - 内置字符表，点击字符可快速输入
+- 支持 PWA 安装和离线缓存
 
 ## 使用
 
 直接在浏览器中打开 `index.html` 即可使用，不需要构建步骤或本地服务。
+
+如果希望安装到本地并启用 PWA 离线缓存，需要通过 `https://` 或本地服务器访问页面。开发时可以在项目目录运行：
+
+```bash
+python3 -m http.server 4173
+```
+
+然后打开 `http://localhost:4173/`。浏览器完成首次加载后，会缓存页面、脚本、样式、图标和字体资源；之后即使离线也可以继续从已安装的应用或浏览器缓存中打开。
+
+页面右上角有“安装”按钮。支持原生 PWA 安装弹窗的浏览器会直接弹出安装确认；iOS Safari 等不支持网页直接触发安装的浏览器，会显示“添加到主屏幕”的操作提示。
+
+在手机上测试时，如果手机访问的是电脑的局域网地址，例如 `http://192.168.x.x:4173/`，浏览器通常不会把它当作安全上下文，因此无法注册 Service Worker，也不会出现 PWA 安装弹窗。手机安装测试请使用 HTTPS 部署地址，或使用 HTTPS 隧道。
 
 项目结构：
 
 ```text
 .
 ├── assets/
+│   ├── icon-192.png
+│   ├── icon-512.png
+│   ├── icon.svg
 │   └── RUNEREGULAR.ttf
 ├── index.html
+├── manifest.webmanifest
+├── service-worker.js
 ├── script.js
 └── styles.css
 ```

@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111312" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="洛克语翻译器" />
     <title>ᚱᛟᚳᛟ · 洛克语翻译器</title>
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icon-192.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -14,7 +20,10 @@
           <h1>洛克语翻译器</h1>
         </div>
         <div class="header-actions">
-          <button class="help-button" id="helpButton" type="button" aria-haspopup="dialog">帮助</button>
+          <div class="header-buttons">
+            <button class="install-button" id="installButton" type="button" aria-haspopup="dialog">安装</button>
+            <button class="help-button" id="helpButton" type="button" aria-haspopup="dialog">帮助</button>
+          </div>
           <div class="rune-mark" aria-hidden="true">ROCO</div>
         </div>
       </header>
@@ -130,6 +139,22 @@
           <p>洛克语文字只有 24 个，英文字母有 26 个，因此有两组字母共用同一个文字：C 和 K 相同，V 和 W 相同。</p>
           <p>反向转换时无法判断原文是哪一个重复字母，可以分别设置 ᚲ 偏向 C 还是 K，以及 ᚹ 偏向 V 还是 W。</p>
         </div>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="installModal" hidden>
+      <section
+        class="help-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="installTitle"
+        tabindex="-1"
+      >
+        <div class="modal-heading">
+          <h2 id="installTitle">安装到本地</h2>
+          <button class="copy-button" id="closeInstall" type="button">关闭</button>
+        </div>
+        <div class="help-content install-content" id="installInstructions"></div>
       </section>
     </div>
 

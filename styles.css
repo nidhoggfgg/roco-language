@@ -67,6 +67,13 @@ button {
   gap: 14px;
 }
 
+.header-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: var(--accent-2);
@@ -289,6 +296,7 @@ textarea[readonly] {
 }
 
 .copy-button,
+.install-button,
 .help-button,
 .icon-button {
   display: inline-flex;
@@ -311,6 +319,16 @@ textarea[readonly] {
   padding: 0 14px;
 }
 
+.install-button {
+  padding: 0 14px;
+  color: #1b1710;
+  background: var(--accent);
+}
+
+.install-button[hidden] {
+  display: none;
+}
+
 .icon-button {
   color: var(--danger);
   font-size: 1.4rem;
@@ -318,6 +336,7 @@ textarea[readonly] {
 }
 
 .copy-button:hover,
+.install-button:hover,
 .help-button:hover,
 .icon-button:hover,
 .decode-option:hover,
@@ -433,6 +452,10 @@ textarea[readonly] {
   margin: 0;
 }
 
+.install-content strong {
+  color: var(--text);
+}
+
 @media (max-width: 760px) {
   body {
     padding-bottom: 78px;
@@ -455,6 +478,10 @@ textarea[readonly] {
   .header-actions {
     justify-items: start;
     margin-top: 16px;
+  }
+
+  .header-buttons {
+    justify-content: flex-start;
   }
 
   .rune-mark {

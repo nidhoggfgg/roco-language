@@ -104,6 +104,10 @@ const clearButton = document.querySelector("#clearButton");
 const copySecondary = document.querySelector("#copySecondary");
 const decodePreference = document.querySelector("#decodePreference");
 const decodeOptions = document.querySelectorAll(".decode-option");
+const installButton = document.querySelector("#installButton");
+const installModal = document.querySelector("#installModal");
+const installInstructions = document.querySelector("#installInstructions");
+const closeInstall = document.querySelector("#closeInstall");
 const helpButton = document.querySelector("#helpButton");
 const helpModal = document.querySelector("#helpModal");
 const closeHelp = document.querySelector("#closeHelp");
@@ -118,6 +122,7 @@ let encodeText = sourceText.value;
 let decodeText = "";
 let toastTimer = 0;
 let isAlphabetOpen = false;
+let deferredInstallPrompt = null;
 
 function encodeToUnicode(text) {
   return [...text]
@@ -240,6 +245,64 @@ function renderAlphabet() {
     .join("");
 }
 
+function isStandaloneApp() {
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
+function getInstallInstructions() {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  const isIos = /iphone|ipad|ipod/.test(userAgent);
+  const isAndroid = /android/.test(userAgent);
+
+  if (window.location.protocol === "file:") {
+    return [
+      "PWA 安装需要通过本地服务器或 HTTPS 打开页面。",
+      "开发时可以运行 python3 -m http.server 4173，然后访问 http://localhost:4173/。",
+    ];
+  }
+
+  if (!window.isSecureContext) {
+    return [
+      "当前地址不是安全连接，手机浏览器不会允许安装 PWA。",
+      "请用 HTTPS 地址访问，例如部署到 GitHub Pages、Cloudflare Pages、Netlify，或用 HTTPS 隧道测试。",
+      "http://localhost 只对同一台设备有效；手机访问电脑的局域网 IP 不算 localhost。",
+    ];
+  }
+
+  if (isIos) {
+    return [
+      "在 Safari 中点击底部的分享按钮。",
+      "选择“添加到主屏幕”。",
+      "确认名称后点击“添加”。",
+    ];
+  }
+
+  if (isAndroid) {
+    return [
+      "如果没有弹出安装窗口，请稍等几秒再点一次安装。",
+      "也可以打开浏览器菜单，选择“安装应用”或“添加到主屏幕”。",
+    ];
+  }
+
+  return [
+    "如果没有弹出安装窗口，请查看地址栏右侧或浏览器菜单。",
+    "选择“安装应用”或“添加到主屏幕”。",
+  ];
+}
+
+function showInstallInstructions() {
+  installInstructions.innerHTML = getInstallInstructions()
+    .map((instruction, index) => `<p><strong>${index + 1}.</strong> ${instruction}</p>`)
+    .join("");
+  installModal.hidden = false;
+  installModal.querySelector(".help-modal").focus();
+}
+
+function closeInstallModal() {
+  installModal.hidden = true;
+  installButton.focus();
+}
+
 function setAlphabetOpen(isOpen) {
   isAlphabetOpen = isOpen;
   alphabetPanel.classList.toggle("open", isOpen);
@@ -334,6 +397,29 @@ clearButton.addEventListener("click", () => {
 
 copySecondary.addEventListener("click", () => copyText(secondaryOutput.value));
 
+installButton.addEventListener("click", async () => {
+  if (isStandaloneApp()) {
+    showToast("已安装");
+    return;
+  }
+
+  if (!deferredInstallPrompt) {
+    showInstallInstructions();
+    return;
+  }
+
+  deferredInstallPrompt.prompt();
+  const choice = await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+
+  if (choice.outcome === "accepted") {
+    installButton.hidden = true;
+    showToast("安装完成");
+  } else {
+    showToast("已取消安装");
+  }
+});
+
 alphabetToggle.addEventListener("click", () => setAlphabetOpen(!isAlphabetOpen));
 
 mobileQuery.addEventListener("change", () => {
@@ -382,9 +468,24 @@ helpModal.addEventListener("click", (event) => {
   }
 });
 
+closeInstall.addEventListener("click", closeInstallModal);
+installModal.addEventListener("click", (event) => {
+  if (event.target === installModal) {
+    closeInstallModal();
+  }
+});
+
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !helpModal.hidden) {
+  if (event.key !== "Escape") {
+    return;
+  }
+
+  if (!helpModal.hidden) {
     closeHelpModal();
+  }
+
+  if (!installModal.hidden) {
+    closeInstallModal();
   }
 });
 
@@ -405,3 +506,27 @@ alphabetGrid.addEventListener("click", (event) => {
 renderAlphabet();
 setAlphabetOpen(false);
 updateOutput();
+
+if (isStandaloneApp()) {
+  installButton.hidden = true;
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  installButton.hidden = false;
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  installButton.hidden = true;
+  showToast("安装完成");
+});
+
+if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {
+      showToast("离线缓存暂不可用");
+    });
+  });
+}
