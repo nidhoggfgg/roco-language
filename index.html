@@ -30,7 +30,7 @@
         </div>
 
         <div class="workbench">
-          <section class="panel">
+          <section class="panel source-panel">
             <div class="panel-heading">
               <label id="sourceLabel" for="sourceText">英文</label>
               <button class="copy-button" id="clearButton" type="button">清空</button>
@@ -45,7 +45,7 @@
 
           <section class="panel output-panel">
             <div class="panel-heading">
-              <label id="primaryLabel" for="primaryOutput">洛克语字体</label>
+              <label id="primaryLabel" for="primaryOutput">洛克语字体预览</label>
             </div>
             <div class="decode-preference" id="decodePreference" hidden>
               <div class="decode-group">
@@ -86,21 +86,25 @@
               </div>
             </div>
             <textarea id="primaryOutput" class="rune-font" readonly spellcheck="false"></textarea>
-          </section>
-        </div>
-
-        <div class="secondary-grid">
-          <section class="panel compact-panel">
-            <div class="panel-heading">
+            <div class="result-subheading">
               <label id="secondaryLabel" for="secondaryOutput">Unicode 洛克语</label>
               <button class="copy-button" id="copySecondary" type="button">复制</button>
             </div>
-            <textarea id="secondaryOutput" readonly spellcheck="false"></textarea>
+            <textarea id="secondaryOutput" class="secondary-output" readonly spellcheck="false"></textarea>
           </section>
 
-          <section class="panel compact-panel">
+          <section class="panel compact-panel alphabet-panel" id="alphabetPanel">
             <div class="panel-heading">
               <span>字符表</span>
+              <button
+                class="copy-button alphabet-toggle"
+                id="alphabetToggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="alphabetGrid"
+              >
+                展开
+              </button>
             </div>
             <div id="alphabetGrid" class="alphabet-grid" aria-label="Roco alphabet"></div>
           </section>

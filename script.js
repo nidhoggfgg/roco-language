@@ -96,7 +96,9 @@ const primaryLabel = document.querySelector("#primaryLabel");
 const secondaryLabel = document.querySelector("#secondaryLabel");
 const primaryOutput = document.querySelector("#primaryOutput");
 const secondaryOutput = document.querySelector("#secondaryOutput");
+const alphabetPanel = document.querySelector("#alphabetPanel");
 const alphabetGrid = document.querySelector("#alphabetGrid");
+const alphabetToggle = document.querySelector("#alphabetToggle");
 const modeButtons = document.querySelectorAll(".mode-button");
 const clearButton = document.querySelector("#clearButton");
 const copySecondary = document.querySelector("#copySecondary");
@@ -107,6 +109,7 @@ const helpModal = document.querySelector("#helpModal");
 const closeHelp = document.querySelector("#closeHelp");
 const toast = document.querySelector("#toast");
 const blockedKeys = new Set(["Enter", " "]);
+const mobileQuery = window.matchMedia("(max-width: 760px)");
 
 let mode = "encode";
 let ckPreference = "c";
@@ -114,6 +117,7 @@ let vwPreference = "v";
 let encodeText = sourceText.value;
 let decodeText = "";
 let toastTimer = 0;
+let isAlphabetOpen = false;
 
 function encodeToUnicode(text) {
   return [...text]
@@ -167,7 +171,7 @@ function setMode(nextMode) {
 
   if (mode === "encode") {
     sourceLabel.textContent = "英文";
-    primaryLabel.textContent = "洛克语字体";
+    primaryLabel.textContent = "洛克语字体预览";
     secondaryLabel.textContent = "Unicode 洛克语";
     decodePreference.hidden = true;
     sourceText.classList.remove("rune-font");
@@ -175,7 +179,7 @@ function setMode(nextMode) {
     secondaryOutput.classList.remove("rune-font");
   } else {
     sourceLabel.textContent = "洛克语";
-    primaryLabel.textContent = "英文";
+    primaryLabel.textContent = "英文结果";
     secondaryLabel.textContent = "保留文本";
     decodePreference.hidden = false;
     sourceText.classList.add("rune-font");
@@ -183,6 +187,7 @@ function setMode(nextMode) {
     secondaryOutput.classList.add("rune-font");
   }
 
+  setAlphabetOpen(mode === "decode" && mobileQuery.matches);
   updateOutput();
 }
 
@@ -233,6 +238,14 @@ function renderAlphabet() {
       `,
     )
     .join("");
+}
+
+function setAlphabetOpen(isOpen) {
+  isAlphabetOpen = isOpen;
+  alphabetPanel.classList.toggle("open", isOpen);
+  document.body.classList.toggle("alphabet-open", isOpen && mobileQuery.matches);
+  alphabetToggle.setAttribute("aria-expanded", String(isOpen));
+  alphabetToggle.textContent = isOpen ? "收起" : "展开";
 }
 
 modeButtons.forEach((button) => {
@@ -321,6 +334,12 @@ clearButton.addEventListener("click", () => {
 
 copySecondary.addEventListener("click", () => copyText(secondaryOutput.value));
 
+alphabetToggle.addEventListener("click", () => setAlphabetOpen(!isAlphabetOpen));
+
+mobileQuery.addEventListener("change", () => {
+  setAlphabetOpen(mobileQuery.matches && mode === "decode");
+});
+
 decodeOptions.forEach((button) => {
   button.addEventListener("click", () => {
     const group = button.dataset.group;
@@ -384,4 +403,5 @@ alphabetGrid.addEventListener("click", (event) => {
 });
 
 renderAlphabet();
+setAlphabetOpen(false);
 updateOutput();
