@@ -30,11 +30,17 @@
 
       <section class="translator" aria-label="Roco translator">
         <div class="mode-switch" role="tablist" aria-label="转换方向">
-          <button class="mode-button active" type="button" data-mode="encode" role="tab" aria-selected="true">
+          <button class="mode-button active" type="button" data-mode="englishEncode" role="tab" aria-selected="true">
             英文 → 洛克语
           </button>
-          <button class="mode-button" type="button" data-mode="decode" role="tab" aria-selected="false">
+          <button class="mode-button" type="button" data-mode="englishDecode" role="tab" aria-selected="false">
             洛克语 → 英文
+          </button>
+          <button class="mode-button" type="button" data-mode="codeEncode" role="tab" aria-selected="false">
+            通用编码
+          </button>
+          <button class="mode-button" type="button" data-mode="codeDecode" role="tab" aria-selected="false">
+            通用解码
           </button>
         </div>
 
@@ -55,6 +61,7 @@
           <section class="panel output-panel">
             <div class="panel-heading">
               <label id="primaryLabel" for="primaryOutput">洛克语字体预览</label>
+              <button class="copy-button" id="copyPrimary" type="button">复制</button>
             </div>
             <div class="decode-preference" id="decodePreference" hidden>
               <div class="decode-group">
@@ -95,7 +102,7 @@
               </div>
             </div>
             <textarea id="primaryOutput" class="rune-font" readonly spellcheck="false"></textarea>
-            <div class="result-subheading">
+            <div class="result-subheading" id="resultSubheading">
               <label id="secondaryLabel" for="secondaryOutput">Unicode 洛克语</label>
               <button class="copy-button" id="copySecondary" type="button">复制</button>
             </div>
@@ -104,7 +111,7 @@
 
           <section class="panel compact-panel alphabet-panel" id="alphabetPanel">
             <div class="panel-heading">
-              <span>字符表</span>
+              <span id="alphabetTitle">字符表</span>
               <button
                 class="copy-button alphabet-toggle"
                 id="alphabetToggle"
@@ -146,10 +153,10 @@
           <button class="copy-button" id="closeHelp" type="button">关闭</button>
         </div>
         <div class="help-content">
-          <p>输入英文时，右侧会用仓库里的洛克语字体显示同一段文本；下方会给出可复制的 Unicode 洛克语版本。</p>
-          <p>切换到“洛克语 → 英文”后，可以粘贴 Unicode 洛克语文字，页面会尽量转回英文。</p>
+          <p>“英文 → 洛克语”和“洛克语 → 英文”会保留原来的英文字符互转规则。</p>
           <p>洛克语文字只有 24 个，英文字母有 26 个，因此有两组字母共用同一个文字：C 和 K 相同，V 和 W 相同。</p>
           <p>反向转换时无法判断原文是哪一个重复字母，可以分别设置 ᚲ 偏向 C 还是 K，以及 ᚹ 偏向 V 还是 W。</p>
+          <p>“通用编码”和“通用解码”可以处理中文、日文、表情等任意文字。它不是翻译，只是把文字变成一串好玩的洛克语。</p>
         </div>
       </section>
     </div>
