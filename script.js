@@ -122,6 +122,11 @@ const codeReverseAlphabet = Object.fromEntries(
   codeAlphabet.map((rune, index) => [rune, index]),
 );
 const runeDisplayMap = Object.fromEntries(alphabet.map((entry) => [entry.rune, entry.insert]));
+const ambiguousReverseRuneMap = {
+  ᚲ: ["c", "k"],
+  ᚹ: ["v", "w"],
+};
+const maxDecodeCandidates = 64;
 
 const legacyCodeAlphabet = codeAlphabet.slice(0, 16);
 const legacyCodeReverseAlphabet = Object.fromEntries(
@@ -172,7 +177,7 @@ const modeCopy = {
   englishDecode: {
     sourceLabel: "洛克语",
     primaryLabel: "英文结果",
-    secondaryLabel: "保留文本",
+    secondaryLabel: "可能组合",
     alphabetTitle: "字符表",
   },
   codeEncode: {
@@ -285,6 +290,81 @@ function decodeRunes(text) {
       return char;
     })
     .join("");
+}
+
+function getRuneDecodeChoices(char) {
+  if (ambiguousReverseRuneMap[char]) {
+    return ambiguousReverseRuneMap[char];
+  }
+
+  const reverseRuneMap = getReverseRuneMap();
+  const lower = char.toLowerCase();
+
+  if (reverseRuneMap[char]) {
+    return [reverseRuneMap[char]];
+  }
+  if (/[a-z]/.test(lower)) {
+    return [lower];
+  }
+  return [char];
+}
+
+function getAmbiguousRuneCount(text) {
+  return [...text].filter((char) => ambiguousReverseRuneMap[char]).length;
+}
+
+function getMarkedDecode(text) {
+  return [...text]
+    .map((char) => {
+      const choices = ambiguousReverseRuneMap[char];
+      return choices ? `(${choices.join("/")})` : getRuneDecodeChoices(char)[0];
+    })
+    .join("");
+}
+
+function getDecodeCandidates(text) {
+  let candidates = [""];
+  let isTruncated = false;
+
+  for (const char of text) {
+    const choices = getRuneDecodeChoices(char);
+    const nextCandidates = [];
+
+    for (const candidate of candidates) {
+      for (const choice of choices) {
+        if (nextCandidates.length < maxDecodeCandidates) {
+          nextCandidates.push(candidate + choice);
+        } else {
+          isTruncated = true;
+        }
+      }
+    }
+
+    candidates = nextCandidates;
+  }
+
+  return { candidates, isTruncated };
+}
+
+function getDecodeDetails(text) {
+  if (!text) {
+    return "";
+  }
+
+  const ambiguousCount = getAmbiguousRuneCount(text);
+  if (ambiguousCount === 0) {
+    return `没有 C/K 或 V/W 歧义。\n保留文本：${text}`;
+  }
+
+  const { candidates, isTruncated } = getDecodeCandidates(text);
+  const candidateTitle = isTruncated ? `可能组合（前 ${maxDecodeCandidates} 条）` : "可能组合";
+
+  return [
+    `发现 ${ambiguousCount} 个歧义字符。`,
+    `歧义标记：${getMarkedDecode(text)}`,
+    `${candidateTitle}：`,
+    ...candidates.map((candidate, index) => `${index + 1}. ${candidate}`),
+  ].join("\n");
 }
 
 function getCodeDigits(value, size) {
@@ -501,7 +581,7 @@ function syncModeUi() {
   const secondaryHidden = isCodeMode();
   const sourceUsesRuneFont = mode === "englishDecode" || mode === "codeDecode";
   const primaryUsesRuneFont = mode === "englishEncode" || mode === "codeEncode";
-  const secondaryUsesRuneFont = mode === "englishDecode" || mode === "codeEncode";
+  const secondaryUsesRuneFont = mode === "codeEncode";
 
   sourceText.classList.toggle("rune-font", sourceUsesRuneFont);
   primaryOutput.classList.toggle("rune-font", primaryUsesRuneFont);
@@ -532,7 +612,7 @@ function updateOutput() {
 
   if (mode === "englishDecode") {
     primaryOutput.value = decodeRunes(input);
-    secondaryOutput.value = input;
+    secondaryOutput.value = getDecodeDetails(input);
     return;
   }
 
