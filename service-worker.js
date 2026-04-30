@@ -1,4 +1,4 @@
-const CACHE_NAME = "roco-language-v5";
+const CACHE_NAME = "roco-language-v13";
 const APP_SHELL = [
   "./",
   "./index.html",

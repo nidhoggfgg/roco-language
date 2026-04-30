@@ -153,6 +153,20 @@ h1 {
   order: 1;
 }
 
+.source-panel.with-inline-alphabet {
+  display: flex;
+  flex-direction: column;
+}
+
+.source-panel.with-inline-alphabet .alphabet-panel {
+  grid-column: auto;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .output-panel {
   order: 2;
 }
@@ -270,6 +284,40 @@ textarea {
   background: transparent;
   font-size: 1.04rem;
   line-height: 1.6;
+}
+
+.source-editor {
+  position: relative;
+}
+
+.source-display {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  padding: 18px;
+  color: #fbf6e6;
+  font-family: "Rune Regular", serif;
+  font-size: 2.15rem;
+  line-height: 1.45;
+  opacity: 0;
+  overflow-wrap: break-word;
+  pointer-events: none;
+  white-space: pre-wrap;
+}
+
+.source-editor.rune-display-active .source-display {
+  opacity: 1;
+}
+
+.source-editor.rune-display-active textarea {
+  color: transparent;
+  caret-color: transparent;
+}
+
+.source-editor.rune-display-active textarea::selection {
+  color: transparent;
+  background: rgba(228, 184, 93, 0.28);
 }
 
 .output-panel {
@@ -403,6 +451,9 @@ textarea[readonly] {
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .toast {
@@ -487,6 +538,55 @@ textarea[readonly] {
   color: var(--text);
 }
 
+@media (min-width: 761px) {
+  .source-panel.with-inline-alphabet .source-editor {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .source-panel.with-inline-alphabet textarea {
+    min-height: 216px;
+  }
+
+  .source-panel.with-inline-alphabet .alphabet-panel .panel-heading {
+    min-height: 42px;
+  }
+
+  .alphabet-grid {
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+  }
+
+  .alphabet-cell {
+    grid-template-rows: 42px 24px;
+    padding: 0 2px;
+  }
+
+  .alphabet-rune {
+    font-size: 1.82rem;
+  }
+
+  .alphabet-letter {
+    font-size: 0.68rem;
+  }
+
+  .source-panel.with-inline-alphabet .alphabet-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+
+  .source-panel.with-inline-alphabet .alphabet-cell {
+    grid-template-rows: 44px 24px;
+    padding: 0 4px;
+  }
+
+  .source-panel.with-inline-alphabet .alphabet-rune {
+    font-size: 1.9rem;
+  }
+
+  .source-panel.with-inline-alphabet .alphabet-letter {
+    font-size: 0.72rem;
+  }
+}
+
 @media (max-width: 760px) {
   body {
     padding-bottom: 78px;
@@ -548,6 +648,9 @@ textarea[readonly] {
     order: 2;
   }
 
+}
+
+@media (max-width: 760px) and (pointer: coarse) {
   .alphabet-panel {
     position: fixed;
     right: 12px;
@@ -571,7 +674,9 @@ textarea[readonly] {
     max-height: min(48vh, 320px);
     overflow-y: auto;
   }
+}
 
+@media (max-width: 760px) {
   .alphabet-cell {
     grid-template-rows: 40px 24px;
   }
@@ -589,6 +694,10 @@ textarea[readonly] {
   }
 
   .rune-font {
+    font-size: 1.7rem;
+  }
+
+  .source-display {
     font-size: 1.7rem;
   }
 }

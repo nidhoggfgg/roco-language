@@ -50,12 +50,15 @@
               <label id="sourceLabel" for="sourceText">英文</label>
               <button class="copy-button" id="clearButton" type="button">清空</button>
             </div>
-            <textarea
-              id="sourceText"
-              spellcheck="false"
-              autocomplete="off"
-              autocapitalize="off"
-            >roco kingdom</textarea>
+            <div class="source-editor" id="sourceEditor">
+              <div class="source-display" id="sourceDisplay" aria-hidden="true"></div>
+              <textarea
+                id="sourceText"
+                spellcheck="false"
+                autocomplete="off"
+                autocapitalize="off"
+              >roco kingdom</textarea>
+            </div>
           </section>
 
           <section class="panel output-panel">

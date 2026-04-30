@@ -121,6 +121,7 @@ const codeAlphabet = [
 const codeReverseAlphabet = Object.fromEntries(
   codeAlphabet.map((rune, index) => [rune, index]),
 );
+const runeDisplayMap = Object.fromEntries(alphabet.map((entry) => [entry.rune, entry.insert]));
 
 const legacyCodeAlphabet = codeAlphabet.slice(0, 16);
 const legacyCodeReverseAlphabet = Object.fromEntries(
@@ -129,6 +130,10 @@ const legacyCodeReverseAlphabet = Object.fromEntries(
 
 const forgivingTextDecoder = new TextDecoder("utf-8");
 const sourceText = document.querySelector("#sourceText");
+const sourceEditor = document.querySelector("#sourceEditor");
+const sourceDisplay = document.querySelector("#sourceDisplay");
+const workbench = document.querySelector(".workbench");
+const sourcePanel = document.querySelector(".source-panel");
 const sourceLabel = document.querySelector("#sourceLabel");
 const primaryLabel = document.querySelector("#primaryLabel");
 const secondaryLabel = document.querySelector("#secondaryLabel");
@@ -155,6 +160,7 @@ const closeHelp = document.querySelector("#closeHelp");
 const toast = document.querySelector("#toast");
 const blockedKeys = new Set(["Enter", " "]);
 const mobileQuery = window.matchMedia("(max-width: 760px)");
+const floatingAlphabetQuery = window.matchMedia("(max-width: 760px) and (pointer: coarse)");
 
 const modeCopy = {
   englishEncode: {
@@ -186,9 +192,10 @@ const modeCopy = {
 let mode = "englishEncode";
 let modeText = {
   englishEncode: sourceText.value,
-  englishDecode: "",
+  englishDecode: "ᚱᛟᚲᛟ",
   codeEncode: "洛克王国 roco kingdom",
-  codeDecode: "",
+  codeDecode:
+    "ᚨᚲᚨᛗᚢᛃᚨᛒᚾᛞᛞᛞᚨᚲᛞᛁᛗᛈᚨᛒᛈᛝᚦᛞᚨᚨᚨᛒᛁᚷᚨᚨᚨᛖᛏᚹᚨᚨᚨᛖᛝᚠᚨᚨᚨᛖᛞᛊᚨᚨᚨᛖᛝᚠᚨᚨᚨᛒᛁᚷᚨᚨᚨᛖᛗᛃᚨᚨᚨᛖᛃᛉᚨᚨᚨᛖᛈᚨᚨᚨᚨᛖᚺᛟᚨᚨᚨᛖᛖᛇᚨᚨᚨᛖᛝᚠᚨᚨᚨᛖᛟᚢ",
 };
 let ckPreference = "c";
 let vwPreference = "v";
@@ -200,15 +207,23 @@ function isCodeMode() {
   return mode === "codeEncode" || mode === "codeDecode";
 }
 
+function isRuneInputMode() {
+  return mode === "englishDecode" || mode === "codeDecode";
+}
+
+function usesFloatingAlphabet() {
+  return floatingAlphabetQuery.matches;
+}
+
 function isSymbolOnlyInput() {
-  return mode === "englishDecode" && mobileQuery.matches;
+  return isRuneInputMode() && usesFloatingAlphabet();
 }
 
 function syncSourceInputAffordance() {
   const symbolOnly = isSymbolOnlyInput();
-  sourceText.readOnly = symbolOnly;
+  sourceText.readOnly = false;
   sourceText.inputMode = symbolOnly ? "none" : "text";
-  sourceText.setAttribute("aria-readonly", String(symbolOnly));
+  sourceText.setAttribute("aria-readonly", "false");
   sourceText.classList.toggle("symbol-only-input", symbolOnly);
 }
 
@@ -219,6 +234,30 @@ function encodeToUnicode(text) {
       return runeMap[lower] || char;
     })
     .join("");
+}
+
+function getRuneDisplayText(text) {
+  return [...text].map((char) => runeDisplayMap[char] || char).join("");
+}
+
+function updateSourceDisplay() {
+  const isActive = isRuneInputMode();
+  sourceEditor.classList.toggle("rune-display-active", isActive);
+  sourceDisplay.textContent = isActive ? getRuneDisplayText(sourceText.value) : "";
+  sourceDisplay.scrollTop = sourceText.scrollTop;
+  sourceDisplay.scrollLeft = sourceText.scrollLeft;
+}
+
+function syncAlphabetPlacement() {
+  const shouldEmbed = isRuneInputMode() && !usesFloatingAlphabet();
+  const nextParent = shouldEmbed ? sourcePanel : workbench;
+
+  if (alphabetPanel.parentElement !== nextParent) {
+    nextParent.appendChild(alphabetPanel);
+  }
+
+  sourcePanel.classList.toggle("with-inline-alphabet", shouldEmbed);
+  alphabetToggle.hidden = !usesFloatingAlphabet();
 }
 
 function getReverseRuneMap() {
@@ -472,14 +511,17 @@ function syncModeUi() {
   resultSubheading.hidden = secondaryHidden;
   secondaryOutput.hidden = secondaryHidden;
 
+  syncAlphabetPlacement();
   renderAlphabet();
-  setAlphabetOpen(mobileQuery.matches && (mode === "englishDecode" || mode === "codeDecode"));
+  setAlphabetOpen(usesFloatingAlphabet() && (mode === "englishDecode" || mode === "codeDecode"));
   syncSourceInputAffordance();
+  updateSourceDisplay();
 }
 
 function updateOutput() {
   const input = sourceText.value;
   modeText[mode] = input;
+  updateSourceDisplay();
   primaryOutput.classList.remove("error-output");
 
   if (mode === "englishEncode") {
@@ -549,7 +591,7 @@ function renderAlphabet() {
       (entry) => `
         <button class="alphabet-cell" type="button" data-letter="${entry.insert}" data-rune="${entry.rune}" aria-label="${entry.letters}">
           <span class="alphabet-rune">${entry.insert}</span>
-          <span class="alphabet-letter">${entry.letters} · ${entry.rune}</span>
+          <span class="alphabet-letter">${entry.letters}</span>
         </button>
       `,
     )
@@ -615,11 +657,12 @@ function closeInstallModal() {
 }
 
 function setAlphabetOpen(isOpen) {
-  isAlphabetOpen = isOpen;
+  isAlphabetOpen = usesFloatingAlphabet() && isOpen;
   alphabetPanel.classList.toggle("open", isOpen);
-  document.body.classList.toggle("alphabet-open", isOpen && mobileQuery.matches);
-  alphabetToggle.setAttribute("aria-expanded", String(isOpen));
-  alphabetToggle.textContent = isOpen ? "收起" : "展开";
+  document.body.classList.toggle("alphabet-open", isAlphabetOpen);
+  alphabetToggle.hidden = !usesFloatingAlphabet();
+  alphabetToggle.setAttribute("aria-expanded", String(isAlphabetOpen));
+  alphabetToggle.textContent = isAlphabetOpen ? "收起" : "展开";
 }
 
 modeButtons.forEach((button) => {
@@ -627,16 +670,24 @@ modeButtons.forEach((button) => {
 });
 
 sourceText.addEventListener("input", updateOutput);
+sourceText.addEventListener("scroll", updateSourceDisplay);
 
 sourceText.addEventListener("beforeinput", (event) => {
-  if (mode !== "englishDecode") {
+  if (!isRuneInputMode()) {
     return;
   }
 
   const allowedInputTypes = new Set([
     "deleteContentBackward",
     "deleteContentForward",
+    "deleteWordBackward",
+    "deleteWordForward",
+    "deleteHardLineBackward",
+    "deleteHardLineForward",
+    "deleteSoftLineBackward",
+    "deleteSoftLineForward",
     "deleteByCut",
+    "insertFromPaste",
     "historyUndo",
     "historyRedo",
   ]);
@@ -647,7 +698,7 @@ sourceText.addEventListener("beforeinput", (event) => {
 });
 
 sourceText.addEventListener("keydown", (event) => {
-  if (mode !== "englishDecode") {
+  if (!isRuneInputMode()) {
     return;
   }
 
@@ -677,12 +728,6 @@ sourceText.addEventListener("keydown", (event) => {
   }
 
   if (blockedKeys.has(event.key) || event.key.length === 1) {
-    event.preventDefault();
-  }
-});
-
-sourceText.addEventListener("paste", (event) => {
-  if (mode === "englishDecode") {
     event.preventDefault();
   }
 });
@@ -724,10 +769,14 @@ installButton.addEventListener("click", async () => {
 
 alphabetToggle.addEventListener("click", () => setAlphabetOpen(!isAlphabetOpen));
 
-mobileQuery.addEventListener("change", () => {
-  setAlphabetOpen(mobileQuery.matches && (mode === "englishDecode" || mode === "codeDecode"));
+function handleResponsiveAlphabetChange() {
+  syncAlphabetPlacement();
+  setAlphabetOpen(usesFloatingAlphabet() && (mode === "englishDecode" || mode === "codeDecode"));
   syncSourceInputAffordance();
-});
+}
+
+mobileQuery.addEventListener("change", handleResponsiveAlphabetChange);
+floatingAlphabetQuery.addEventListener("change", handleResponsiveAlphabetChange);
 
 decodeOptions.forEach((button) => {
   button.addEventListener("click", () => {
