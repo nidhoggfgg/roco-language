@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111312" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="洛克语翻译器" />
-    <title>ᚱᛟᚳᛟ · 洛克语翻译器</title>
+    <title>ROCO · 洛克语翻译器</title>
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="assets/icon-192.png" />
     <link rel="manifest" href="manifest.webmanifest" />
@@ -48,10 +48,21 @@
           <section class="panel source-panel">
             <div class="panel-heading">
               <label id="sourceLabel" for="sourceText">英文</label>
-              <button class="copy-button" id="clearButton" type="button">清空</button>
+              <div class="source-actions">
+                <button
+                  class="copy-button source-delete-button"
+                  id="deleteButton"
+                  type="button"
+                  aria-label="删除光标前一个字符"
+                  title="删除光标前一个字符"
+                  hidden
+                >
+                  ⌫
+                </button>
+                <button class="copy-button" id="clearButton" type="button">清空</button>
+              </div>
             </div>
             <div class="source-editor" id="sourceEditor">
-              <div class="source-display" id="sourceDisplay" aria-hidden="true"></div>
               <textarea
                 id="sourceText"
                 spellcheck="false"
@@ -63,12 +74,12 @@
 
           <section class="panel output-panel">
             <div class="panel-heading">
-              <label id="primaryLabel" for="primaryOutput">洛克语字体预览</label>
+              <label id="primaryLabel" for="primaryOutput">洛克语</label>
               <button class="copy-button" id="copyPrimary" type="button">复制</button>
             </div>
             <div class="decode-preference" id="decodePreference" hidden>
               <div class="decode-group">
-                <span class="decode-label">ᚲ 对应</span>
+                <span class="decode-label"><span class="inline-rune">c</span> 对应</span>
                 <div class="decode-switch" role="radiogroup" aria-label="C 和 K 的偏好">
                   <button
                     class="decode-option active"
@@ -86,7 +97,7 @@
                 </div>
               </div>
               <div class="decode-group">
-                <span class="decode-label">ᚹ 对应</span>
+                <span class="decode-label"><span class="inline-rune">v</span> 对应</span>
                 <div class="decode-switch" role="radiogroup" aria-label="V 和 W 的偏好">
                   <button
                     class="decode-option active"
@@ -106,7 +117,7 @@
             </div>
             <textarea id="primaryOutput" class="rune-font" readonly spellcheck="false"></textarea>
             <div class="result-subheading" id="resultSubheading">
-              <label id="secondaryLabel" for="secondaryOutput">Unicode 洛克语</label>
+              <label id="secondaryLabel" for="secondaryOutput">洛克语文本</label>
               <button class="copy-button" id="copySecondary" type="button">复制</button>
             </div>
             <textarea id="secondaryOutput" class="secondary-output" readonly spellcheck="false"></textarea>
@@ -158,7 +169,7 @@
         <div class="help-content">
           <p>“英文 → 洛克语”和“洛克语 → 英文”会保留原来的英文字符互转规则。</p>
           <p>洛克语文字只有 24 个，英文字母有 26 个，因此有两组字母共用同一个文字：C 和 K 相同，V 和 W 相同。</p>
-          <p>反向转换时无法判断原文是哪一个重复字母，可以分别设置 ᚲ 偏向 C 还是 K，以及 ᚹ 偏向 V 还是 W。</p>
+          <p>反向转换时无法判断原文是哪一个重复字母，可以分别设置 <span class="inline-rune">c</span> 偏向 C 还是 K，以及 <span class="inline-rune">v</span> 偏向 V 还是 W。</p>
           <p>如果一段文本里同时需要 C/K 或 V/W 的不同写法，页面会在“可能组合”里列出候选结果。</p>
           <p>“通用编码”和“通用解码”可以处理中文、日文、表情等任意文字。它不是翻译，只是把文字变成一串好玩的洛克语。</p>
         </div>

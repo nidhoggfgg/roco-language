@@ -221,6 +221,18 @@ h1 {
   overflow-wrap: anywhere;
 }
 
+.source-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-delete-button {
+  padding: 0;
+  font-size: 1.12rem;
+  line-height: 1;
+}
+
 .decode-preference {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -243,6 +255,13 @@ h1 {
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 800;
+}
+
+.inline-rune {
+  color: var(--accent);
+  font-family: "Rune Regular", serif;
+  font-size: 1.35em;
+  line-height: 1;
 }
 
 .decode-switch {
@@ -290,34 +309,8 @@ textarea {
   position: relative;
 }
 
-.source-display {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  overflow: hidden;
-  padding: 18px;
-  color: #fbf6e6;
-  font-family: "Rune Regular", serif;
-  font-size: 2.15rem;
-  line-height: 1.45;
-  opacity: 0;
-  overflow-wrap: break-word;
-  pointer-events: none;
-  white-space: pre-wrap;
-}
-
-.source-editor.rune-display-active .source-display {
-  opacity: 1;
-}
-
-.source-editor.rune-display-active textarea {
-  color: transparent;
-  caret-color: transparent;
-}
-
-.source-editor.rune-display-active textarea::selection {
-  color: transparent;
-  background: rgba(228, 184, 93, 0.28);
+.source-editor.rune-input-active textarea {
+  caret-color: var(--accent);
 }
 
 .output-panel {

@@ -121,7 +121,13 @@ const codeAlphabet = [
 const codeReverseAlphabet = Object.fromEntries(
   codeAlphabet.map((rune, index) => [rune, index]),
 );
-const runeDisplayMap = Object.fromEntries(alphabet.map((entry) => [entry.rune, entry.insert]));
+const codeDisplayAlphabet = alphabet.map((entry) => entry.insert);
+const runeDisplayMap = Object.fromEntries(
+  codeAlphabet.map((rune, index) => [rune, codeDisplayAlphabet[index]]),
+);
+const displayRuneMap = Object.fromEntries(
+  codeDisplayAlphabet.map((letter, index) => [letter, codeAlphabet[index]]),
+);
 const ambiguousReverseRuneMap = {
   ᚲ: ["c", "k"],
   ᚹ: ["v", "w"],
@@ -136,7 +142,6 @@ const legacyCodeReverseAlphabet = Object.fromEntries(
 const forgivingTextDecoder = new TextDecoder("utf-8");
 const sourceText = document.querySelector("#sourceText");
 const sourceEditor = document.querySelector("#sourceEditor");
-const sourceDisplay = document.querySelector("#sourceDisplay");
 const workbench = document.querySelector(".workbench");
 const sourcePanel = document.querySelector(".source-panel");
 const sourceLabel = document.querySelector("#sourceLabel");
@@ -151,6 +156,7 @@ const alphabetGrid = document.querySelector("#alphabetGrid");
 const alphabetToggle = document.querySelector("#alphabetToggle");
 const modeButtons = document.querySelectorAll(".mode-button");
 const clearButton = document.querySelector("#clearButton");
+const deleteButton = document.querySelector("#deleteButton");
 const copyPrimary = document.querySelector("#copyPrimary");
 const copySecondary = document.querySelector("#copySecondary");
 const decodePreference = document.querySelector("#decodePreference");
@@ -166,12 +172,14 @@ const toast = document.querySelector("#toast");
 const blockedKeys = new Set(["Enter", " "]);
 const mobileQuery = window.matchMedia("(max-width: 760px)");
 const floatingAlphabetQuery = window.matchMedia("(max-width: 760px) and (pointer: coarse)");
+const graphemeSegmenter =
+  "Segmenter" in Intl ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : null;
 
 const modeCopy = {
   englishEncode: {
     sourceLabel: "英文",
-    primaryLabel: "洛克语字体预览",
-    secondaryLabel: "Unicode 洛克语",
+    primaryLabel: "洛克语",
+    secondaryLabel: "",
     alphabetTitle: "字符表",
   },
   englishDecode: {
@@ -207,6 +215,8 @@ let vwPreference = "v";
 let toastTimer = 0;
 let isAlphabetOpen = false;
 let deferredInstallPrompt = null;
+let primaryCopyValue = "";
+let secondaryCopyValue = "";
 
 function isCodeMode() {
   return mode === "codeEncode" || mode === "codeDecode";
@@ -245,12 +255,105 @@ function getRuneDisplayText(text) {
   return [...text].map((char) => runeDisplayMap[char] || char).join("");
 }
 
-function updateSourceDisplay() {
-  const isActive = isRuneInputMode();
-  sourceEditor.classList.toggle("rune-display-active", isActive);
-  sourceDisplay.textContent = isActive ? getRuneDisplayText(sourceText.value) : "";
-  sourceDisplay.scrollTop = sourceText.scrollTop;
-  sourceDisplay.scrollLeft = sourceText.scrollLeft;
+function setPrimaryOutput(displayValue, copyValue = displayValue) {
+  primaryOutput.value = displayValue;
+  primaryCopyValue = copyValue;
+}
+
+function setSecondaryOutput(displayValue, copyValue = displayValue) {
+  secondaryOutput.value = displayValue;
+  secondaryCopyValue = copyValue;
+}
+
+function getDisplaySourceText(text) {
+  return isRuneInputMode() ? getRuneDisplayText(text) : text;
+}
+
+function getLogicalRuneInputText(text) {
+  return [...text]
+    .map((char) => {
+      const lower = char.toLowerCase();
+      return displayRuneMap[lower] || char;
+    })
+    .join("");
+}
+
+function getLogicalSourceText(text = sourceText.value) {
+  return isRuneInputMode() ? getLogicalRuneInputText(text) : text;
+}
+
+function getDisplaySelectionIndex(text, index) {
+  const logicalBeforeSelection = getLogicalSourceText(text.slice(0, index));
+  return getDisplaySourceText(logicalBeforeSelection).length;
+}
+
+function normalizeRuneSourceDisplay(logicalText, displayText) {
+  if (!isRuneInputMode()) {
+    return;
+  }
+
+  const nextDisplayText = getDisplaySourceText(logicalText);
+  if (nextDisplayText === displayText) {
+    return;
+  }
+
+  const selectionStart = getDisplaySelectionIndex(displayText, sourceText.selectionStart);
+  const selectionEnd = getDisplaySelectionIndex(displayText, sourceText.selectionEnd);
+  sourceText.value = nextDisplayText;
+  sourceText.setSelectionRange(selectionStart, selectionEnd);
+}
+
+function updateSourceInputState() {
+  sourceEditor.classList.toggle("rune-input-active", isRuneInputMode());
+}
+
+function getPreviousTextIndex(text, index) {
+  if (index <= 0) {
+    return 0;
+  }
+
+  if (graphemeSegmenter) {
+    let previousIndex = 0;
+    for (const segment of graphemeSegmenter.segment(text)) {
+      if (segment.index >= index) {
+        break;
+      }
+      previousIndex = segment.index;
+    }
+    return previousIndex;
+  }
+
+  let previousIndex = 0;
+  for (const char of text) {
+    const nextIndex = previousIndex + char.length;
+    if (nextIndex >= index) {
+      return previousIndex;
+    }
+    previousIndex = nextIndex;
+  }
+
+  return previousIndex;
+}
+
+function deletePreviousSourceCharacter() {
+  const start = sourceText.selectionStart;
+  const end = sourceText.selectionEnd;
+
+  if (start !== end) {
+    sourceText.value = `${sourceText.value.slice(0, start)}${sourceText.value.slice(end)}`;
+    sourceText.setSelectionRange(start, start);
+    updateOutput();
+    return;
+  }
+
+  const deleteFrom = getPreviousTextIndex(sourceText.value, start);
+  if (deleteFrom === start) {
+    return;
+  }
+
+  sourceText.value = `${sourceText.value.slice(0, deleteFrom)}${sourceText.value.slice(start)}`;
+  sourceText.setSelectionRange(deleteFrom, deleteFrom);
+  updateOutput();
 }
 
 function syncAlphabetPlacement() {
@@ -353,7 +456,7 @@ function getDecodeDetails(text) {
 
   const ambiguousCount = getAmbiguousRuneCount(text);
   if (ambiguousCount === 0) {
-    return `没有 C/K 或 V/W 歧义。\n保留文本：${text}`;
+    return "没有 C/K 或 V/W 歧义。\n输入内容已按上方洛克语解析。";
   }
 
   const { candidates, isTruncated } = getDecodeCandidates(text);
@@ -557,9 +660,9 @@ function setMode(nextMode) {
     return;
   }
 
-  modeText[mode] = sourceText.value;
+  modeText[mode] = getLogicalSourceText();
   mode = nextMode;
-  sourceText.value = modeText[mode];
+  sourceText.value = getDisplaySourceText(modeText[mode]);
 
   modeButtons.forEach((button) => {
     const isActive = button.dataset.mode === mode;
@@ -578,16 +681,17 @@ function syncModeUi() {
   secondaryLabel.textContent = copy.secondaryLabel;
   alphabetTitle.textContent = copy.alphabetTitle;
 
-  const secondaryHidden = isCodeMode();
+  const secondaryHidden = mode !== "englishDecode";
   const sourceUsesRuneFont = mode === "englishDecode" || mode === "codeDecode";
   const primaryUsesRuneFont = mode === "englishEncode" || mode === "codeEncode";
-  const secondaryUsesRuneFont = mode === "codeEncode";
+  const secondaryUsesRuneFont = false;
 
   sourceText.classList.toggle("rune-font", sourceUsesRuneFont);
   primaryOutput.classList.toggle("rune-font", primaryUsesRuneFont);
   secondaryOutput.classList.toggle("rune-font", secondaryUsesRuneFont);
   decodePreference.hidden = mode !== "englishDecode";
-  copyPrimary.hidden = mode === "englishEncode";
+  copyPrimary.hidden = false;
+  deleteButton.hidden = !isRuneInputMode();
   resultSubheading.hidden = secondaryHidden;
   secondaryOutput.hidden = secondaryHidden;
 
@@ -595,37 +699,42 @@ function syncModeUi() {
   renderAlphabet();
   setAlphabetOpen(usesFloatingAlphabet() && (mode === "englishDecode" || mode === "codeDecode"));
   syncSourceInputAffordance();
-  updateSourceDisplay();
+  updateSourceInputState();
 }
 
 function updateOutput() {
-  const input = sourceText.value;
+  const displayInput = sourceText.value;
+  const input = getLogicalSourceText(displayInput);
   modeText[mode] = input;
-  updateSourceDisplay();
+  normalizeRuneSourceDisplay(input, displayInput);
+  updateSourceInputState();
   primaryOutput.classList.remove("error-output");
 
   if (mode === "englishEncode") {
-    primaryOutput.value = input;
-    secondaryOutput.value = encodeToUnicode(input);
+    const unicodeOutput = encodeToUnicode(input);
+    const displayOutput = getRuneDisplayText(unicodeOutput);
+    setPrimaryOutput(displayOutput, unicodeOutput);
+    setSecondaryOutput("");
     return;
   }
 
   if (mode === "englishDecode") {
-    primaryOutput.value = decodeRunes(input);
-    secondaryOutput.value = getDecodeDetails(input);
+    setPrimaryOutput(decodeRunes(input));
+    setSecondaryOutput(getDecodeDetails(input));
     return;
   }
 
   if (mode === "codeEncode") {
-    primaryOutput.value = encodeTextToCode(input);
-    secondaryOutput.value = "";
+    const unicodeOutput = encodeTextToCode(input);
+    setPrimaryOutput(getRuneDisplayText(unicodeOutput), unicodeOutput);
+    setSecondaryOutput("");
     return;
   }
 
   const result = decodeCode(input);
-  primaryOutput.value = result.text;
+  setPrimaryOutput(result.text);
   primaryOutput.classList.toggle("error-output", !result.ok);
-  secondaryOutput.value = "";
+  setSecondaryOutput("");
 }
 
 async function copyText(value) {
@@ -657,7 +766,7 @@ function renderAlphabet() {
       .map(
         (rune, index) => `
           <button class="alphabet-cell" type="button" data-rune="${rune}" aria-label="${index.toString(16).toUpperCase()}">
-            <span class="alphabet-rune">${rune}</span>
+            <span class="alphabet-rune">${getRuneDisplayText(rune)}</span>
             <span class="alphabet-letter">${index.toString(16).toUpperCase()}</span>
           </button>
         `,
@@ -750,7 +859,6 @@ modeButtons.forEach((button) => {
 });
 
 sourceText.addEventListener("input", updateOutput);
-sourceText.addEventListener("scroll", updateSourceDisplay);
 
 sourceText.addEventListener("beforeinput", (event) => {
   if (!isRuneInputMode()) {
@@ -821,8 +929,15 @@ clearButton.addEventListener("click", () => {
   updateOutput();
 });
 
-copyPrimary.addEventListener("click", () => copyText(primaryOutput.value));
-copySecondary.addEventListener("click", () => copyText(secondaryOutput.value));
+deleteButton.addEventListener("click", () => {
+  deletePreviousSourceCharacter();
+  if (!isSymbolOnlyInput()) {
+    sourceText.focus();
+  }
+});
+
+copyPrimary.addEventListener("click", () => copyText(primaryCopyValue));
+copySecondary.addEventListener("click", () => copyText(secondaryCopyValue));
 
 installButton.addEventListener("click", async () => {
   if (isStandaloneApp()) {
@@ -927,7 +1042,13 @@ alphabetGrid.addEventListener("click", (event) => {
     return;
   }
 
-  const textToInsert = isCodeMode() || mode === "englishDecode" ? cell.dataset.rune : cell.dataset.letter;
+  let textToInsert = cell.dataset.letter;
+  if (isRuneInputMode()) {
+    textToInsert = getRuneDisplayText(cell.dataset.rune);
+  } else if (isCodeMode()) {
+    textToInsert = cell.dataset.rune;
+  }
+
   const start = sourceText.selectionStart;
   const end = sourceText.selectionEnd;
   const nextSelection = start + textToInsert.length;
