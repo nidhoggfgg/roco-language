@@ -59,16 +59,14 @@ button {
 
 .topbar {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
-  min-height: 138px;
 }
 
 .header-actions {
-  display: grid;
-  justify-items: end;
-  gap: 14px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .header-buttons {
@@ -78,31 +76,16 @@ button {
   gap: 10px;
 }
 
-.eyebrow {
-  margin: 0 0 8px;
-  color: var(--accent-2);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-}
-
-h1 {
-  margin: 0;
-  font-size: clamp(2.7rem, 8vw, 7rem);
-  line-height: 0.9;
-  letter-spacing: 0;
-}
-
 .rune-mark {
   color: var(--accent);
   font-family: "Rune Regular", serif;
-  font-size: clamp(2.5rem, 8vw, 6.6rem);
+  font-size: clamp(2.5rem, 8vw, 5.2rem);
   line-height: 1;
   white-space: nowrap;
 }
 
 .translator {
-  margin-top: 28px;
+  margin-top: 20px;
 }
 
 .mode-switch {
@@ -595,21 +578,21 @@ textarea[readonly] {
   }
 
   .topbar {
-    display: block;
-    min-height: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
   }
 
   .header-actions {
-    justify-items: start;
-    margin-top: 16px;
+    margin-top: 0;
   }
 
   .header-buttons {
-    justify-content: flex-start;
+    justify-content: flex-end;
   }
 
   .rune-mark {
-    display: block;
+    font-size: clamp(2.1rem, 14vw, 3.4rem);
   }
 
   .decode-preference {
@@ -687,10 +670,6 @@ textarea[readonly] {
   }
 
   .rune-font {
-    font-size: 1.7rem;
-  }
-
-  .source-display {
     font-size: 1.7rem;
   }
 }

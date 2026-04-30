@@ -1,6 +1,6 @@
 {
-  "name": "洛克语翻译器",
-  "short_name": "洛克语",
+  "name": "ROCO",
+  "short_name": "ROCO",
   "description": "离线可用的英文、任意文字和洛克语符文转换工具。",
   "id": "./",
   "lang": "zh-CN",
