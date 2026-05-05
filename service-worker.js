@@ -1,9 +1,9 @@
-const CACHE_NAME = "roco-language-v14";
+const CACHE_NAME = "roco-language-v15";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css",
-  "./script.js",
+  "./styles.css?v=15",
+  "./script.js?v=15",
   "./manifest.webmanifest",
   "./assets/icon.svg",
   "./assets/icon-192.png",
@@ -20,17 +20,34 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((cacheNames) =>
-        Promise.all(
-          cacheNames
-            .filter((cacheName) => cacheName !== CACHE_NAME)
-            .map((cacheName) => caches.delete(cacheName)),
+    Promise.all([
+      caches
+        .keys()
+        .then((cacheNames) =>
+          Promise.all(
+            cacheNames
+              .filter((cacheName) => cacheName !== CACHE_NAME)
+              .map((cacheName) => caches.delete(cacheName)),
+          ),
         ),
-      ),
+      self.clients.claim(),
+      self.clients
+        .matchAll({ includeUncontrolled: true, type: "window" })
+        .then((clients) =>
+          Promise.all(
+            clients.map((client) => {
+              const clientUrl = new URL(client.url);
+
+              if (clientUrl.origin !== self.location.origin) {
+                return undefined;
+              }
+
+              return client.navigate(client.url);
+            }),
+          ),
+        ),
+    ]),
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
@@ -62,29 +79,28 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+  if (
+    requestUrl.origin === self.location.origin &&
+    ["script", "style"].includes(event.request.destination)
+  ) {
+    event.respondWith(fetchAndCache(event.request).catch(() => caches.match(event.request)));
+    return;
+  }
 
-      return fetch(event.request)
-        .then((networkResponse) => {
-          if (requestUrl.origin === self.location.origin && networkResponse.ok) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-
-          return networkResponse;
-        })
-        .catch(() => {
-          if (event.request.mode === "navigate") {
-            return caches.match("./index.html");
-          }
-          return Response.error();
-        });
-    }),
-  );
+  event.respondWith(caches.match(event.request).then((cachedResponse) => cachedResponse || fetchAndCache(event.request)));
 });
+
+function fetchAndCache(request) {
+  return fetch(request).then((networkResponse) => {
+    const requestUrl = new URL(request.url);
+
+    if (requestUrl.origin === self.location.origin && networkResponse.ok) {
+      const responseClone = networkResponse.clone();
+      caches.open(CACHE_NAME).then((cache) => {
+        cache.put(request, responseClone);
+      });
+    }
+
+    return networkResponse;
+  });
+}

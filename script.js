@@ -1081,8 +1081,13 @@ window.addEventListener("appinstalled", () => {
 
 if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").catch(() => {
-      showToast("离线缓存暂不可用");
-    });
+    navigator.serviceWorker
+      .register("./service-worker.js")
+      .then((registration) => {
+        registration.update();
+      })
+      .catch(() => {
+        showToast("离线缓存暂不可用");
+      });
   });
 }
